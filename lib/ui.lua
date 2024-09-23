@@ -190,7 +190,6 @@ ui.render_config = function(toggle)
     end
 
     if not ui.state.open[1] then
-        gProfileSettings.mode.movewarnings = false
         --print('settings close: '..tostring(ui.state.open))
         return
     end
@@ -861,8 +860,6 @@ ui.updatecolors = function ()
 end
 
 ui.save_changes = function ()
-    gProfileSettings.mode.movewarnings = false
-
     local defaultSettingsFile = gStatus.SettingsFolder .. 'config.lua';
 	local defaultFiltersFile = gStatus.SettingsFolder .. 'default_filters.lua';
 	local defaultColorsFile = gStatus.SettingsFolder .. 'chat_colors.lua';
