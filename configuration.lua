@@ -24,6 +24,10 @@ local settings = T{
 		showguards = true,
 		showcritws = false,
 		showrollinfo = false,
+		disable = false,
+		warnings = false,
+		movewarnings = false,
+		displayprioritywarningsonly = false,
 	},
 	text = T{
 		line_aoe		= 'AOE ${numb} '..string.char(129,168)..' ${target}',

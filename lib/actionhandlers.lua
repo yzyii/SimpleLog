@@ -1,8 +1,6 @@
 local actionhandlers = {};
 
-
-
-actionhandlers.parse_action_packet = function(act)
+actionhandlers.parse_action_packet = function(act, messages)
     if not Self then
         Self = GetPlayerEntity()
         if not Self then
@@ -18,8 +16,60 @@ actionhandlers.parse_action_packet = function(act)
     end
 
     -- Constructing table from act to work with, gathering info
-	act.actor = gActionHandlers.ActorParse(act.actor_id)
+    act.actor = gActionHandlers.ActorParse(act.actor_id)
     act.action = gActionHandlers.SpellParse(act)
+
+    if (not gProfileSettings.mode.warnings) then
+        if (act.actor.is_npc and (act.actor.owner == nil or act.actor.owner == 'other') and act.action) then
+            if (act.action.name and act.action.name ~= 'hit') then
+                local isPrio = false
+                for _,val in ipairs(gPriority) do
+                    if (string.match(act.action.name, val)) then
+                        isPrio = true
+                        break
+                    end
+                end
+
+                local msg = act.actor.name .. ' - ' .. act.action.name:gsub("[%c]", "")
+
+                local isDupe = false
+                for j = 1,5 do
+                    if (messages[j].expiry ~= nil) then
+                        if (msg == messages[j].text) then
+                            isDupe = true
+                        end
+                    end
+                end
+
+                if ((isPrio or not gLoadedSettings.display_priority_only) and not isDupe) then
+                    for i = 1,5 do
+                        if (messages[i].expiry == nil) then
+                            if (isPrio) then
+                                local fontColor = gLoadedSettings.font_color_priority
+                                if (gLoadedSettings.use_alt_priority_font_color) then
+                                    fontColor = gLoadedSettings.font_color_priority_alt
+                                end
+                                messages[i].fontobj:set_font_color(fontColor)
+                            else
+                                messages[i].fontobj:set_font_color(gLoadedSettings.font_color_default)
+                            end
+
+                            AshitaCore:GetChatManager():AddChatMessage(39, false, 'WARNING: ' .. msg)
+                            messages[i].fontobj:set_text(msg)
+                            messages[i].text = msg
+                            messages[i].expiry = os.clock() + gLoadedSettings.fade_after
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if (gProfileSettings.mode.disable) then
+        return
+    end
+
     act.actor.name = act.actor and act.actor.name and string.gsub(act.actor.name,'[- ]', {['-'] = string.char(0x81,0x7C), [' '] = string.char(0x81,0x3F)}) --fix for ffxi chat splits on trusts with - and spaces
     targets_condensed = false
 
@@ -252,7 +302,7 @@ actionhandlers.parse_action_packet = function(act)
                     else m.simp_name = act.action.name or ''
                     end
                 end
-                
+
                 -- Debuff Application Messages
                 if gProfileSettings.mode.simplify and message_map[82]:contains(m.message) then
                     if gProfileSettings.lang.msg_text == 'jp' then
@@ -278,7 +328,7 @@ actionhandlers.parse_action_packet = function(act)
                         end
                     end
                 end
-                
+
                 -- Some messages uses the english log version of the buff
                 if not gProfileSettings.mode.simplify and log_form_messages:contains(m.message) then
                     m.status = AshitaCore:GetResourceManager():GetString('buffs.names_log', m.param, 2)
@@ -521,10 +571,10 @@ end
 
 actionhandlers.ActToString = function(original,act)
     if type(act) ~= 'table' then return act end
-    
+
     function assemble_bit_packed(init,val,initial_length,final_length)
         if not init then return init end
-        
+
         if type(val) == 'boolean' then
             if val then val = 1 else val = 0 end
         elseif type(val) ~= 'number' then
@@ -532,14 +582,14 @@ actionhandlers.ActToString = function(original,act)
         end
         local bits = initial_length%8
         local byte_length = math.ceil(final_length/8)
-        
+
         local out_val = 0
         if bits > 0 then
             out_val = init:byte(#init) -- Initialize out_val to the remainder in the active byte.
             init = init:sub(1,#init-1) -- Take off the active byte
         end
         out_val = out_val + val*2^bits -- left-shift val by the appropriate amount and add it to the remainder (now the lsb-s in val)
-        
+
         while out_val > 0 do
             init = init..string.char(out_val%256)
             out_val = math.floor(out_val/256)
@@ -549,7 +599,7 @@ actionhandlers.ActToString = function(original,act)
         end
         return init
     end
-    
+
     local react = assemble_bit_packed(tostring(original):sub(1,4),act.size,32,40)
     react = assemble_bit_packed(react,act.actor_id,40,72)
     react = assemble_bit_packed(react,act.target_count,72,82)
@@ -557,7 +607,7 @@ actionhandlers.ActToString = function(original,act)
     react = assemble_bit_packed(react,act.param,86,102)
     react = assemble_bit_packed(react,act.unknown,102,118)
     react = assemble_bit_packed(react,act.recast,118,150)
-    
+
     local offset = 150
     for i = 1,act.target_count do
         react = assemble_bit_packed(react,act.targets[i].server_id,offset,offset+32)
@@ -572,7 +622,7 @@ actionhandlers.ActToString = function(original,act)
             react = assemble_bit_packed(react,act.targets[i].actions[n].param,offset+27,offset+44)
             react = assemble_bit_packed(react,act.targets[i].actions[n].message,offset+44,offset+54)
             react = assemble_bit_packed(react,act.targets[i].actions[n].unknown,offset+54,offset+85)
-            
+
             react = assemble_bit_packed(react,act.targets[i].actions[n].has_add_effect,offset+85,offset+86)
             offset = offset + 86
             if act.targets[i].actions[n].has_add_effect then
@@ -598,7 +648,7 @@ actionhandlers.ActToString = function(original,act)
             react = react..original:sub(#react+1,#react+1)
         end
     else
-		gFuncs.Error('Act to String Failed: Invalid Act table returned.')
+        gFuncs.Error('Act to String Failed: Invalid Act table returned.')
     end
     return react
 end
@@ -610,11 +660,11 @@ actionhandlers.StringToAct = function(packet)
     end
     act_table['size'] = ashita.bits.unpack_be(packet:totable(), 32, 8)
     act_table['actor_id'] = ashita.bits.unpack_be(packet:totable(), 40, 32)
-	act_table['actor_index'] = struct.unpack('L', packet, 0x05 + 1);
+    act_table['actor_index'] = struct.unpack('L', packet, 0x05 + 1);
     act_table['target_count'] = ashita.bits.unpack_be(packet:totable(), 72, 10)
     act_table['category'] = ashita.bits.unpack_be(packet:totable(), 82, 4)
     act_table['param'] = ashita.bits.unpack_be(packet:totable(), 86, 16)
-	act_table['msg'] = ashita.bits.unpack_be(packet:totable(), 230, 10);
+    act_table['msg'] = ashita.bits.unpack_be(packet:totable(), 230, 10);
     act_table['unknown'] = ashita.bits.unpack_be(packet:totable(), 102, 16)
     act_table['recast'] = ashita.bits.unpack_be(packet:totable(), 118, 32)
     act_table['targets'] = {}
@@ -665,7 +715,7 @@ actionhandlers.StringToAct = function(packet)
         target['offset_end'] = offset
         table.insert(act_table['targets'], target)
     end
-	
+
     return act_table
 end
 

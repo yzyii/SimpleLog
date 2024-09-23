@@ -13,7 +13,7 @@ commands.HandleCommand = function(e)
         gConfig.toggle_menu(1)
     end
     if (#args == 2 and args[2]:any('build_msg')) then
-        if debug then
+        if slog_debug then
             local success_en, loadError_en = loadfile(('%saddons\\simplelog\\lib\\res\\action_messages_en.lua'):fmt(AshitaCore:GetInstallPath()));
             local success_jp, loadError_jp = loadfile(('%saddons\\simplelog\\lib\\res\\action_messages_jp.lua'):fmt(AshitaCore:GetInstallPath()));
 

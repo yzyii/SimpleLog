@@ -78,21 +78,26 @@ packethandlers.DelayedSelfAssign = function ()
     Self = GetPlayerEntity()
 end
 
-packethandlers.HandleIncoming0x28 = function(e)
-	local act_org = gActionHandlers.StringToAct(e.data)
-	act_org.size = e.data:byte(5)
-	local act_mod = gActionHandlers.StringToAct(e.data_modified)
-	act_mod.size = e.data_modified:byte(5)
+packethandlers.HandleIncoming0x28 = function(e, messages)
+    local act_org = gActionHandlers.StringToAct(e.data)
+    act_org.size = e.data:byte(5)
 
-	return gActionHandlers.ActToString(e.data, gActionHandlers.parse_action_packet(act_org, act_mod))
+    return gActionHandlers.ActToString(e.data, gActionHandlers.parse_action_packet(act_org, messages))
 end
 
-packethandlers.HandleIncomingPacket = function(e)
-	if (e.id == 0x00A) then
-		gPacketHandlers.HandleIncoming0x00A(e);
+packethandlers.HandleIncomingPacket = function(e, messages)
+    if (e.id == 0x00A) then
+        gPacketHandlers.HandleIncoming0x00A(e);
     elseif (e.id == 0x28) then
         if check_duplicates(e) then return end
-        e.data_modified = gPacketHandlers.HandleIncoming0x28(e);
+        if (gProfileSettings.mode.disable) then
+            local act_org = gActionHandlers.StringToAct(e.data)
+            act_org.size = e.data:byte(5)
+            gActionHandlers.parse_action_packet(act_org, messages)
+            return
+        end
+
+        e.data_modified = gPacketHandlers.HandleIncoming0x28(e, messages);
     end
 
 ------- ITEM QUANTITY -------
