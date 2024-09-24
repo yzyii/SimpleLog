@@ -30,7 +30,7 @@ actionhandlers.parse_action_packet = function(act, messages)
                     end
                 end
 
-                local msg = act.actor.name .. ' - ' .. act.action.name:gsub("[%c]", "")
+                local msg = act.actor.name .. ' - ' .. act.action.name:gsub("[^%w%s%p]+", ""); 
 
                 local isDupe = false
                 for j = 1,5 do
