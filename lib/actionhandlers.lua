@@ -20,7 +20,7 @@ actionhandlers.parse_action_packet = function(act, messages)
     act.action = gActionHandlers.SpellParse(act)
 
     if (not gProfileSettings.mode.warnings) then
-        if (act.actor.is_npc and (act.actor.owner == nil or act.actor.owner == 'other') and act.action) then
+        if (act.actor.is_monster and (act.actor.owner == nil or act.actor.owner == 'other') and act.action) then
             if (act.action.name and act.action.name ~= 'hit') then
                 local isPrio = false
                 for _,val in ipairs(gPriority) do
@@ -903,6 +903,7 @@ actionhandlers.ActorParse = function (actor_id)
     end
 
     local ActorIsNpc = bit.band(actor_table.SpawnFlags, 0x1) == 0
+    local ismonster = bit.band(actor_table.SpawnFlags, 0x10) ~= 0
 
     for i,v in pairs(gFuncs.GetPartyData()) do
         if type(v) == 'table' and v.mob and v.mob.ServerId == actor_table.ServerId then
@@ -986,7 +987,7 @@ actionhandlers.ActorParse = function (actor_id)
         actor_name = actor_table.MonstrosityName
     end
 
-    return {name = actor_name, id = actor_id, is_npc = ActorIsNpc, type = typ, damage = dmg, filter = filt, owner = (owner or nil), owner_name = (owner_name or ''), race = actor_table.Race}
+    return {name = actor_name, id = actor_id, is_npc = ActorIsNpc, is_monster = ismonster, type = typ, damage = dmg, filter = filt, owner = (owner or nil), owner_name = (owner_name or ''), race = actor_table.Race}
 end
 
 actionhandlers.SpellParse = function (act)
