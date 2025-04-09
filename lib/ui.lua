@@ -255,6 +255,26 @@ ui.render_config = function(toggle)
 
                     -- Language support yet not fully implemented
                     imgui.PushTextWrapPos(0)
+					local disable_slog = imgui.Checkbox('##disableslog', {gProfileSettings.mode.disable})
+					if disable_slog then
+						gProfileSettings.mode.disable = not gProfileSettings.mode.disable
+					end
+					imgui.SameLine()
+					imgui.TextColored(theme.header_text_col, 'Disable SimpleLog')
+					imgui.PushTextWrapPos(0)
+					imgui.TextColored(theme.desc_text_col, 'Turns off SimpleLog')
+
+                    imgui.NewLine()
+					local disable_warnings = imgui.Checkbox('##warnings', {gProfileSettings.mode.warnings})
+					if disable_warnings then
+						gProfileSettings.mode.warnings = not gProfileSettings.mode.warnings
+					end
+					imgui.SameLine()
+					imgui.TextColored(theme.header_text_col, 'Disable UI Warnings')
+					imgui.PushTextWrapPos(0)
+					imgui.TextColored(theme.desc_text_col, 'Turns off UI Warnings')
+
+                    imgui.NewLine()
                     imgui.TextColored(theme.desc_text_col, 'Language Option:\nSwitch between English or Japanese message outputs.')
                     -- Temp Warning
                     imgui.TextColored({1.0, 0.0, 0.0, 1.0}, 'EXPERIMENTAL')

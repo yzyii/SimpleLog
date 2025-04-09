@@ -679,5 +679,5 @@ get_mon_skill = nil
 get_mon_ability = nil
 get_spell = nil
 get_item = nil
-debug = false
+slog_debug = false
 
