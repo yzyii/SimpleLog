@@ -3,6 +3,8 @@
 - Adds the ability to turn SimpleLog functionality off entirely
 - Adds a Warning UI displayed whenever an enemy uses a spell or ability taken from https://github.com/yzyii/rWarnings
 
+This repo is basically an experiment to see if simplelog's mob parsing is more robust than rWarnings which it is.
+
 # Commands
 - **/simplelog** or **/slog** - Calls the configuration menu.
 - **/swarnings** - Displays additional UI Warning commands.
